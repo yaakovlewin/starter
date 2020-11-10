@@ -17,6 +17,11 @@
                 sum = sum + data.allItems[type][i].value;
             }
             data.totals[type] = sum;
+            data.totals.all = data.totals.inc - data.totals.exp;
+            if (data.totals.inc > 0) {
+                data.totals.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+            }
+            
     }
     var data = {
         allItems:{
@@ -25,7 +30,9 @@
         },
         totals:{
             exp: 0,
-            inc: 0
+            inc: 0,
+            all: 0,
+            percentage: 0
         }
     }
 
@@ -65,7 +72,8 @@ var uiControler = (function () {
         inputValue: '.add__value',
         submit: '.submit',
         incomeContainer:'.income__list',
-        expenseContainer:'.expenses__list'
+        expenseContainer:'.expenses__list',
+        budgetTotal:'.budget__value'
     }
     
     return {
@@ -123,7 +131,7 @@ var controler = (function(budgetControler, uiControler) {
 
         uiControler.addListItem(newItem, input.type);
 
-        //budgetControler.calculateTotals(input.type)
+        budgetControler.calculateTotals(input.type)
     }
         
     return {
