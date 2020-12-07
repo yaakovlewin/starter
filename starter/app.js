@@ -18,9 +18,6 @@
             }
             data.totals[type] = sum;
             data.totals.all = data.totals.inc - data.totals.exp;
-            if (data.totals.all < 0) {
-                data.totals.all = 0;
-            }
             if (data.totals.inc > 0) {
                 data.totals.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
             }
@@ -49,22 +46,14 @@
             }
             
             if(type === 'exp') {
-                newItem = new Eexpens(ID, des, val);
+                newItem = new Eexpens(ID, des, val)
             }else if(type === 'inc'){
-                newItem = new Income(ID, des, val);
+                newItem = new Income(ID, des, val)
             }
-            data.allItems[type].push(newItem);
-            calculateTotals(type);
-            budgetControler.test();
+            data.allItems[type].push(newItem)
+            calculateTotals(type)
+            budgetControler.test()
             return newItem;   
-        },
-        getBudget: function() {
-            return{
-                budget: data.totals.all,
-                totalInc: data.totals.inc,
-                totalexp: data.totals.exp,
-                percentage: data.totals.percentage    
-            }
         },
         test: function() {
             console.log(data);
@@ -84,10 +73,7 @@ var uiControler = (function () {
         submit: '.submit',
         incomeContainer:'.income__list',
         expenseContainer:'.expenses__list',
-        budgetIcon:'.budget__value',
-        incomeIcon: '.budget__income--value',
-        expensIcon: '.budget__expenses--value',
-        percentageIcon: '.budget__expenses--percentage'
+        budgetTotal:'.budget__value'
     }
     
     return {
@@ -96,8 +82,7 @@ var uiControler = (function () {
              type: document.querySelector(DOMstrings.inputType).value, //inc or exp
              description: document.querySelector(DOMstrings.inputDescription).value,
              value: parseFloat(document.querySelector(DOMstrings.inputValue).value)
-
-            };
+            }
         },
         addListItem: function(obj, type) {
             var html, newHtml, element;
@@ -113,30 +98,6 @@ var uiControler = (function () {
             newHtml = newHtml.replace('%value%', obj.value);
 
             document.querySelector(element).insertAdjacentHTML("beforeend", newHtml)
-            
-        },
-
-        clearFialds: function() {
-            var fields, fieldsArr;
-            fields = document.querySelectorAll(DOMstrings.inputDescription + ' ,' + DOMstrings.inputValue);
-            fieldsArr = Array.prototype.slice.call(fields);
-            fieldsArr.forEach(function(element) {
-                element.value = "";
-            })
-            fieldsArr[0].focus();
-        },
-
-        didplayBudget: function(obj) {
-            document.querySelector(DOMstrings.budgetIcon).textContent = obj.budget;
-            document.querySelector(DOMstrings.incomeIcon).textContent = obj.totalInc;
-            document.querySelector(DOMstrings.expensIcon).textContent = obj.totalexp;
-            if (obj.percentage > 0 && obj.totalexp <= obj.totalInc) {
-               document.querySelector(DOMstrings.percentageIcon).textContent = obj.percentage + '%';
-            } else if (obj.totalexp > obj.totalInc && obj.totalInc > 0) {
-                document.querySelector(DOMstrings.percentageIcon).textContent = '100%'
-            } else {
-                document.querySelector(DOMstrings.percentageIcon).textContent = '0%'
-            }
             
         },
 
@@ -164,20 +125,13 @@ var controler = (function(budgetControler, uiControler) {
         var input, newItem;
 
         input = uiControler.getInput();
-        
-        if (input.description === '' || isNaN(input.value)) {
-            window.alert('enter a valid input')
-        } else {
-            newItem = budgetControler.addItem(input.type, input.description, input.value);
-        
-            uiControler.addListItem(newItem, input.type);
+        console.log(input);
 
-            uiControler.clearFialds();
+        newItem = budgetControler.addItem(input.type, input.description, input.value);
 
-            var budget = budgetControler.getBudget();
+        uiControler.addListItem(newItem, input.type);
 
-            uiControler.didplayBudget(budget);
-        }
+        budgetControler.calculateTotals(input.type)
     }
         
     return {
