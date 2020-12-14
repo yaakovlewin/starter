@@ -14,6 +14,12 @@
         this.value = value;
     }
 
+    var Maaser = function(id, description, value) {
+        this.id = id;
+        this.description = description;
+        this.value = value;
+    }
+
     Eexpens.prototype.calcPercentage = function(totalInc) {
         if (totalInc > 0) {
                 this.percentage = Math.round((this.value / totalInc) * 100);
@@ -21,6 +27,8 @@
                 this.percentage = 0;
             }
     }
+
+    Maaser.prototype = Object.create(Eexpens.prototype);
 
     Eexpens.prototype.getPercentage = function() {
         return this.percentage;
@@ -31,24 +39,23 @@
             for(var i = 0; i < data.allItems[type].length; i++) {
                 sum = sum + data.allItems[type][i].value;
             }
-            data.totals[type] = sum;
-            data.totals.all = data.totals.inc - data.totals.exp;
-            if (data.totals.all < 0) {
-                data.totals.all = 0;
-            }
-            
-            
+        data.totals[type] = sum;
+              
     }
     var data = {
         allItems:{
             exp: [],
-            inc: []
+            inc: [],
+            maaser:[]
         },
         totals:{
             exp: 0,
             inc: 0,
+            maaser:0,
             all: 0,
-            percentage: 0
+            percentage: 0,
+            maaserPercentage:0,
+            incPercentage: 0
         }
     }
 
@@ -57,16 +64,20 @@
             var newItem, ID;
             if (!data.allItems[type].length) {
                  ID = 100;
-            }else if (data.allItems[type].length > 0 ) {
+            } else if (data.allItems[type].length > 0 ) {
                 ID = data.allItems[type][data.allItems[type].length -1].id +1;
             }
             
-            if(type === 'exp') {
+            if (type === 'exp') {
                 newItem = new Eexpens(ID, des, val);
-            }else if(type === 'inc'){
+            } else if (type === 'inc') {
                 newItem = new Income(ID, des, val);
+            } else if (type === 'maaser') {
+                newItem = new Maaser(ID, des, val);
             }
             data.allItems[type].push(newItem);
+
+            budgetControler.test()
             
   
             return newItem;   
@@ -77,32 +88,43 @@
             // calculate total income and expenses
             calculateTotals('exp');
             calculateTotals('inc');
+            calculateTotals('maaser');
             
             // Calculate the budget: income - expenses
             
-            data.totals.all = data.totals.inc - data.totals.exp;
-            if (data.totals.all < 0) {
-                data.totals.all = 0;
-            }
+            data.totals.all = data.totals.inc - data.totals.exp - data.totals.maaser;
             if (data.totals.inc > 0) {
                 data.totals.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
+                data.totals.maaserPercentage = Math.round((data.totals.maaser / data.totals.inc) * 100);
+            }
+            
+            
+            if (data.totals.all <= 0) {
+                data.totals.all = 0;
+                data.totals.incPercentage = 0;
+            } else if (data.totals.inc > 0) {
+                data.totals.incPercentage = 100 - data.totals.percentage - data.totals.maaserPercentage;
+            }
+        },
+
+        calculatePercentage: function(type) {
+            if(type !== undefined) {
+                data.allItems[type].forEach (function(cur) {
+                cur.calcPercentage(data.totals.inc)
+                })
             }
             
         },
-
-        calculatePercentage: function() {
-            data.allItems.exp.forEach (function(cur) {
-                cur.calcPercentage(data.totals.inc)
-            })
-        },
         
-        getPercentages: function() {
+        getPercentages: function(type) {
             
-            let allPerc = data.allItems.exp.map(function(cur) {
+            var allPerc = data.allItems[type].map(function(cur) {
                 
-                return cur.getPercentage();
+            return cur.getPercentage();
             })
+
             return allPerc;
+          
         },
 
         deleteItem: function(type, id) {
@@ -125,9 +147,16 @@
                 budget: data.totals.all,
                 totalInc: data.totals.inc,
                 totalexp: data.totals.exp,
-                percentage: data.totals.percentage    
+                totalMaaser:data.totals.maaser,
+                percentage: data.totals.percentage,
+                incPercentages: data.totals.incPercentage,
+                maaserPercentages: data.totals.maaserPercentage
             }
+        },
+        test: function() {
+            console.log(data)
         }
+        
     }
 
 })()
@@ -143,12 +172,17 @@ var uiControler = (function () {
         submit: '.submit',
         incomeContainer:'.income__list',
         expenseContainer:'.expenses__list',
+        maaserContainer:'.maaser__list',
         budgetIcon:'.budget__value',
         incomeIcon: '.budget__income--value',
+        incPercentageIcon:'.budget__income--percentage',
         expensIcon: '.budget__expenses--value',
         percentageIcon: '.budget__expenses--percentage',
+        maaserIcon:'.budget__maaser--value',
+        maaserPercentageIcon:'.budget__maaser--percentage',
         container: '.container',
-        percentageExp: '.item__percentage'
+        percentageExp: '.item__percentage',
+        percentageMaaser:'.maaserItem__percentage'
     }
 
     
@@ -171,6 +205,20 @@ var uiControler = (function () {
             }else if(type === 'exp'){
                 element = DOMstrings.expenseContainer;
                 html = '<div class="item clearfix" id="exp-%id%"><div class="item__description">%description%</div><div class="right clearfix"><div class="item__value">%value%</div><div class="item__percentage">%21%</div><div class="item__delete"><button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button></div></div></div>'
+            } else if (type === 'maaser') {
+                element = DOMstrings.maaserContainer;
+                html = `
+                <div class="item clearfix" id="maaser-%id%">
+                            <div class="item__description">%description%</div>
+                            <div class="right clearfix">
+                                <div class="item__value">%value%</div>
+                                <div class="maaserItem__percentage">%21%</div>
+                                <div class="item__delete">
+                                    <button class="item__delete--btn"><i class="ion-ios-close-outline"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                `
             }
             newHtml = html.replace('%id%', obj.id);
             newHtml = newHtml.replace('%description%', obj.description);
@@ -200,6 +248,19 @@ var uiControler = (function () {
             document.querySelector(DOMstrings.budgetIcon).textContent = obj.budget;
             document.querySelector(DOMstrings.incomeIcon).textContent = obj.totalInc;
             document.querySelector(DOMstrings.expensIcon).textContent = obj.totalexp;
+            document.querySelector(DOMstrings.maaserIcon).textContent = obj.totalMaaser;
+            document.querySelector(DOMstrings.incPercentageIcon).textContent = obj.incPercentages + '%';
+
+
+            if (obj.maaserPercentages > 0 && obj.totalMaaser <= obj.totalInc) {
+                document.querySelector(DOMstrings.maaserPercentageIcon).textContent = obj.maaserPercentages + '%';
+             } else if (obj.totalMaaser > obj.totalInc && obj.totalInc > 0) {
+                 document.querySelector(DOMstrings.maaserPercentageIcon).textContent = '100%'
+             } else {
+                 document.querySelector(DOMstrings.maaserPercentageIcon).textContent = '0%'
+             }
+
+
             if (obj.percentage > 0 && obj.totalexp <= obj.totalInc) {
                document.querySelector(DOMstrings.percentageIcon).textContent = obj.percentage + '%';
             } else if (obj.totalexp > obj.totalInc && obj.totalInc > 0) {
@@ -210,8 +271,14 @@ var uiControler = (function () {
             
         },
 
-        displayPercentage: function(percentages) {
-            let fields = document.querySelectorAll(DOMstrings.percentageExp);
+        displayPercentage: function(percentages, type) {
+            var fields;
+            if (type === 'exp') {
+                fields = document.querySelectorAll(DOMstrings.percentageExp);
+            } else if (type === 'maaser') {
+                fields = document.querySelectorAll(DOMstrings.percentageMaaser)
+            }
+            
             
             let nodeListForEach = function(list, callback) {
                     for (var i = 0; i < list.length; i++) {
@@ -239,7 +306,7 @@ var controler = (function(budgetControler, uiControler) {
         var dom = uiControler.getDOMstrings();
         document.querySelector(dom.submit).addEventListener('click', ctrlAddItem)
         document.addEventListener('keypress', function (event) {
-            if (event.keyCode === 63557 || event.keyCode === 13){
+            if (event.keyCode === 13){
                 ctrlAddItem()
             }
         })
@@ -256,22 +323,32 @@ var controler = (function(budgetControler, uiControler) {
         uiControler.displayBudget(budget);
     };
 
-    var updatePercentages = function() {
-        
-        budgetControler.calculatePercentage();
+    var updatePercentages = function(type) {
 
-        var percentages = budgetControler.getPercentages();
+        budgetControler.calculatePercentage(type);
 
-        uiControler.displayPercentage(percentages);
+        var exPercentages = budgetControler.getPercentages('exp');
+
+        var maaserPercent = budgetControler.getPercentages('maaser');
+
+        uiControler.displayPercentage(exPercentages, 'exp');
+
+        uiControler.displayPercentage(maaserPercent, 'maaser');
     }
     
     var ctrlAddItem = function() {
-        var input, newItem;
+        var input, newItem, consent;
 
         input = uiControler.getInput();
-        
-        if (input.description === '' || isNaN(input.value)) {
-            window.alert('enter a valid input')
+
+        if (input.description === '') {
+            consent = window.confirm('You did not enter a description, Do you want to continue?')
+        }
+
+        if (isNaN(input.value)) {
+            window.alert('enter a valid amount')
+        } else if(consent === false) {
+            uiControler.clearFialds()
         } else {
             newItem = budgetControler.addItem(input.type, input.description, input.value);
         
@@ -281,7 +358,11 @@ var controler = (function(budgetControler, uiControler) {
 
             updateBudget()
 
-            updatePercentages()
+            if (input.type === 'exp' || input.type === 'maaser') {
+                var type = input.type;
+            }
+
+            updatePercentages(type)
 
         }
     }
