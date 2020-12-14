@@ -93,15 +93,17 @@
             // Calculate the budget: income - expenses
             
             data.totals.all = data.totals.inc - data.totals.exp - data.totals.maaser;
+                if (data.totals.all < 0) {
+                    data.totals.all = 0;
+                    data.totals.incPercentage = 0;
+
             if (data.totals.inc > 0) {
                 data.totals.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
                 data.totals.maaserPercentage = Math.round((data.totals.maaser / data.totals.inc) * 100);
             }
             
             
-            if (data.totals.all <= 0) {
-                data.totals.all = 0;
-                data.totals.incPercentage = 0;
+            
             } else if (data.totals.inc > 0) {
                 data.totals.incPercentage = 100 - data.totals.percentage - data.totals.maaserPercentage;
             }
@@ -279,7 +281,6 @@ var uiControler = (function () {
                 fields = document.querySelectorAll(DOMstrings.percentageMaaser)
             }
             
-            
             let nodeListForEach = function(list, callback) {
                     for (var i = 0; i < list.length; i++) {
                         callback(list[i], i);
@@ -302,6 +303,8 @@ var uiControler = (function () {
 
 
 var controler = (function(budgetControler, uiControler) {
+    
+
     var setupEventListener = function() {
         var dom = uiControler.getDOMstrings();
         document.querySelector(dom.submit).addEventListener('click', ctrlAddItem)
@@ -337,9 +340,9 @@ var controler = (function(budgetControler, uiControler) {
     }
     
     var ctrlAddItem = function() {
-        var input, newItem, consent;
+        var newItem, consent;
 
-        input = uiControler.getInput();
+        let input = uiControler.getInput();
 
         if (input.description === '') {
             consent = window.confirm('You did not enter a description, Do you want to continue?')
@@ -358,11 +361,9 @@ var controler = (function(budgetControler, uiControler) {
 
             updateBudget()
 
-            if (input.type === 'exp' || input.type === 'maaser') {
-                var type = input.type;
-            }
+            updatePercentages('exp');
 
-            updatePercentages(type)
+            updatePercentages('maaser');
 
         }
     }
@@ -382,7 +383,9 @@ var controler = (function(budgetControler, uiControler) {
 
             updateBudget()
 
-            updatePercentages()
+            updatePercentages('exp')
+
+            updatePercentages('maaser')
         }
     }
         
