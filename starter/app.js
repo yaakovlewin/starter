@@ -93,9 +93,10 @@
             // Calculate the budget: income - expenses
             
             data.totals.all = data.totals.inc - data.totals.exp - data.totals.maaser;
-                if (data.totals.all < 0) {
-                    data.totals.all = 0;
-                    data.totals.incPercentage = 0;
+            if (data.totals.all < 0) {
+                data.totals.all = 0;
+                data.totals.incPercentage = 0;
+            }
 
             if (data.totals.inc > 0) {
                 data.totals.percentage = Math.round((data.totals.exp / data.totals.inc) * 100);
@@ -104,7 +105,7 @@
             
             
             
-            } else if (data.totals.inc > 0) {
+            if (data.totals.inc > 0) {
                 data.totals.incPercentage = 100 - data.totals.percentage - data.totals.maaserPercentage;
             }
         },
